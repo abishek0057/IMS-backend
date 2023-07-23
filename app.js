@@ -7,9 +7,11 @@ const { errorHandler } = require("./middleware/errorMiddleware");
 const app = express();
 const PORT = process.env.PORT || 8888;
 const dbConString = process.env.DB_CONNECTION_STRING;
+const cookieParser = require("cookie-parser");
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 

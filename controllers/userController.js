@@ -26,6 +26,13 @@ const registerUser = async (req, res, next) => {
     let result = await newUser.save();
 
     const token = generateToken(result._id);
+    res.cookie("token", token, {
+      path: "/",
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 86400),
+      sameSite: "none",
+      secure: true,
+    });
 
     result = { ...result.toObject(), token };
 
