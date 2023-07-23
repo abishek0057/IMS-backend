@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const { generateToken } = require("../utils/jwt");
+const { validatePassword } = require("../utils/password");
 
 const registerUser = async (req, res, next) => {
   try {
@@ -42,6 +43,54 @@ const registerUser = async (req, res, next) => {
   }
 };
 
+const loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      res.status(400);
+      throw new Error("please add email and password");
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(400);
+      throw new Error("User not found!!");
+    }
+    const hashedPassword = user.password;
+    const isCorrectPassword = await validatePassword(password, hashedPassword);
+    const token = generateToken(user._id);
+    res.cookie("token", token, {
+      path: "/",
+      httpOnly: true,
+      expires: new Date(Date.now() + 1000 * 86400),
+      sameSite: "none",
+      secure: true,
+    });
+    if (user && isCorrectPassword) {
+      const result = { ...user.toObject(), token };
+      res.status(201).json({ userInfo: result });
+      res.json({ userInfo: user });
+    } else {
+      res.status(400);
+      throw new Error("Invalid email or password");
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+const logoutUser = async (req, res) => {
+  res.cookie("token", "", {
+    path: "/",
+    httpOnly: true,
+    expires: new Date(0),
+    sameSite: "none",
+    secure: true,
+  });
+  return res.status(200).json({ message: "successfully logout" });
+};
+
 module.exports = {
   registerUser,
+  loginUser,
+  logoutUser,
 };
