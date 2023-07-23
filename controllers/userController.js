@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const { generateToken } = require("../utils/jwt");
 
 const registerUser = async (req, res, next) => {
   try {
@@ -22,7 +23,12 @@ const registerUser = async (req, res, next) => {
       password,
     });
 
-    const result = await newUser.save();
+    let result = await newUser.save();
+
+    const token = generateToken(result._id);
+
+    result = { ...result.toObject(), token };
+
     res.status(201).json({ newuser: result });
   } catch (err) {
     next(err);
