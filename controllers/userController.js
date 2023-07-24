@@ -1,5 +1,5 @@
 const User = require("../models/userModel");
-const { generateToken } = require("../utils/jwt");
+const { generateToken, verifyToken } = require("../utils/jwt");
 const { validatePassword } = require("../utils/password");
 
 const registerUser = async (req, res, next) => {
@@ -88,14 +88,26 @@ const logoutUser = async (req, res) => {
   return res.status(200).json({ message: "successfully logout" });
 };
 
-const getUser = async (req, res) => {
-  const user = await User.findById(req.user._id).select("-password");
-  if (user) {
-    res.status(201).json({ user });
-  } else {
-    res.status(400);
-    throw new Error("User not found");
+const getUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (user) {
+      res.status(201).json({ user });
+    } else {
+      res.status(400);
+      throw new Error("User not found");
+    }
+  } catch (err) {
+    next(err);
   }
+};
+
+const loginStatus = async (req, res) => {
+  const token = req.cookies.token;
+  if (!token) return res.json(false);
+  const verified = verifyToken(token, process.env.JWT_SECRET);
+  if (verified) return res.json(true);
+  else return res.json(false);
 };
 
 module.exports = {
@@ -103,4 +115,5 @@ module.exports = {
   loginUser,
   logoutUser,
   getUser,
+  loginStatus,
 };
