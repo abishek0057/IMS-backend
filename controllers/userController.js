@@ -68,7 +68,6 @@ const loginUser = async (req, res, next) => {
     if (user && isCorrectPassword) {
       const result = { ...user.toObject(), token };
       res.status(201).json({ userInfo: result });
-      res.json({ userInfo: user });
     } else {
       res.status(400);
       throw new Error("Invalid email or password");
@@ -89,8 +88,19 @@ const logoutUser = async (req, res) => {
   return res.status(200).json({ message: "successfully logout" });
 };
 
+const getUser = async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password");
+  if (user) {
+    res.status(201).json({ user });
+  } else {
+    res.status(400);
+    throw new Error("User not found");
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
+  getUser,
 };
