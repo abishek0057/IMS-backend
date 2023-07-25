@@ -130,6 +130,34 @@ const updateUser = async (req, res, next) => {
   }
 };
 
+const changePassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    const { oldPassword, password } = req.body;
+
+    if (!user) {
+      res.status(400);
+      throw new Error("Please signup");
+    }
+    if (!oldPassword || !password) {
+      res.status(400);
+      throw new Error("Please add old and new password");
+    }
+    const isValidPassword = await validatePassword(oldPassword, user.password);
+
+    if (isValidPassword) {
+      user.password = password;
+      await user.save();
+      res.status(200).json({ message: "password change successfully" });
+    } else {
+      res.status(400);
+      throw new Error("Incorrect old password");
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -137,4 +165,5 @@ module.exports = {
   getUser,
   loginStatus,
   updateUser,
+  changePassword,
 };
