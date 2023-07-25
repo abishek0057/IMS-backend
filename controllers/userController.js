@@ -110,10 +110,31 @@ const loginStatus = async (req, res) => {
   else return res.json(false);
 };
 
+const updateUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (user) {
+      user.name = req.body.name || user.name;
+      user.phone = req.body.phone || user.phone;
+      user.bio = req.body.bio || user.bio;
+      user.photo = req.body.photo || user.photo;
+
+      const updateduser = await user.save();
+      res.status(200).json({ updateduser });
+    } else {
+      res.status(400);
+      throw new Error("user not found");
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   logoutUser,
   getUser,
   loginStatus,
+  updateUser,
 };
