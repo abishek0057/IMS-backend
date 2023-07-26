@@ -1,6 +1,10 @@
 const User = require("../models/userModel");
+const Token = require("../models/tokenModel");
+const crypto = require("crypto");
 const { generateToken, verifyToken } = require("../utils/jwt");
 const { validatePassword } = require("../utils/password");
+const message = require("../utils/emailContent");
+const sendEmail = require("../utils/sendEmail");
 
 const registerUser = async (req, res, next) => {
   try {
@@ -158,6 +162,78 @@ const changePassword = async (req, res, next) => {
   }
 };
 
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      res.status(404);
+      throw new Error("User does not exist");
+    }
+
+    let token = await Token.findOne({ userId: user._id });
+    if (token) {
+      await token.deleteOne();
+    }
+
+    let resetToken = crypto.randomBytes(32).toString("hex") + user._id;
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const resetTokenInfo = new Token({
+      userId: user._id,
+      token: hashedToken,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    });
+    const result = await resetTokenInfo.save();
+    const resetUrl = `${process.env.FRONTEND_URL}/resetpassword/${resetToken}`;
+
+    const msg = message(user.name, process.env.FRONTEND_URL, resetUrl);
+    const subject = "Password Reset Request";
+    const send_to = user.email;
+    const send_from = process.env.EMAIL_USER;
+    const emailResult = await sendEmail(send_from, send_to, subject, msg);
+    if (emailResult.accepted.length > 0)
+      res.status(200).json({ success: true, message: "Reset Email send" });
+    else
+      res.status(400).json({ success: false, message: "Reset Email not send" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+    const { resetToken } = req.params;
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    const userToken = await Token.findOne({
+      token: hashedToken,
+      expiresAt: { $gt: Date.now() },
+    });
+    if (!userToken) {
+      res.status(400);
+      throw new Error("Invalid or expired token");
+    }
+    const user = await User.findOne({ _id: userToken.userId });
+    user.password = password;
+    await user.save();
+    res.status(200).json({ message: "Password reset successfull" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -166,4 +242,6 @@ module.exports = {
   loginStatus,
   updateUser,
   changePassword,
+  forgotPassword,
+  resetPassword,
 };
