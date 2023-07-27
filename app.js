@@ -8,6 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 8888;
 const dbConString = process.env.DB_CONNECTION_STRING;
 const cookieParser = require("cookie-parser");
+const path = require("path");
 
 app.use(cors());
 app.use(express.json());
@@ -17,6 +18,8 @@ app.use(bodyParser.json());
 
 const userRoute = require("./routes/userRoute");
 const productRoute = require("./routes/productRoute");
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/user", userRoute);
 app.use("/api/product", productRoute);
 
