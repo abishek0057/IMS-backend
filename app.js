@@ -16,7 +16,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const userRoute = require("./routes/userRoute");
+const productRoute = require("./routes/productRoute");
 app.use("/api/user", userRoute);
+app.use("/api/product", productRoute);
 
 app.get("/", (req, res) => {
   res.send("yohohohoho");
