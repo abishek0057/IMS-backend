@@ -1,7 +1,13 @@
 const Product = require("../models/productModel");
 const { fileSizeFormatter } = require("../utils/fileUpload");
+const cloudinary = require("cloudinary").v2;
 
 const createProduct = async (req, res, next) => {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
   try {
     const { name, sku, category, quantity, price, description } = req.body;
     if (!name || !category || !quantity || !price || !description) {
@@ -11,9 +17,19 @@ const createProduct = async (req, res, next) => {
 
     let fileData = {};
     if (req.file) {
+      let uploadedFile;
+      try {
+        uploadedFile = await cloudinary.uploader.upload(req.file.path, {
+          folder: "IMS",
+          resource_type: "image",
+        });
+      } catch (err) {
+        res.status(500);
+        throw new Error("Image could not be uploaded");
+      }
       fileData = {
         fileName: req.file.Originalname,
-        filePath: req.file.path,
+        filePath: uploadedFile.secure_url,
         fileType: req.file.mimetype,
         fileSize: fileSizeFormatter(req.file.size, 2),
       };
