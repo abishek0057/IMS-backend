@@ -51,6 +51,18 @@ const createProduct = async (req, res, next) => {
   }
 };
 
+const getProducts = async (req, res) => {
+  try {
+    const products = await Product.find({ user: req.user.id }).sort(
+      "-createdAt"
+    );
+    res.status(200).json({ products });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
+  getProducts,
 };
