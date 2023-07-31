@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Product = require("../models/productModel");
 const { fileSizeFormatter } = require("../utils/fileUpload");
 const cloudinary = require("cloudinary").v2;
@@ -51,7 +52,7 @@ const createProduct = async (req, res, next) => {
   }
 };
 
-const getProducts = async (req, res) => {
+const getProducts = async (req, res, next) => {
   try {
     const products = await Product.find({ user: req.user.id }).sort(
       "-createdAt"
@@ -62,7 +63,32 @@ const getProducts = async (req, res) => {
   }
 };
 
+const getProduct = async (req, res, next) => {
+  try {
+    const productId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      res.status(400);
+      throw new Error("Invalid product ID");
+      return;
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      res.status(404);
+      throw new Error("Product not found");
+    }
+    if (product.user.toString() !== req.user.id) {
+      res.status(404);
+      throw new Error("User not authorized");
+    }
+    res.status(200).json({ product });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getProducts,
+  getProduct,
 };
