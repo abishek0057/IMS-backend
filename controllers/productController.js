@@ -115,9 +115,74 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
+const updateProduct = async (req, res, next) => {
+  try {
+    const { name, category, quantity, price, description } = req.body;
+    const productId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      res.status(400);
+      throw new Error("Invalid product ID");
+    }
+    const product = await Product.findById(productId);
+    if (!product) {
+      res.status(404);
+      throw new Error("Product not found");
+    }
+    if (product.user.toString() !== req.user.id) {
+      res.status(404);
+      throw new Error("User not authorized");
+    }
+    let fileData = {};
+    if (req.file) {
+      let uploadedFile;
+      try {
+        uploadedFile = await cloudinary.uploader.upload(req.file.path, {
+          folder: "IMS",
+          resource_type: "image",
+        });
+      } catch (err) {
+        res.status(500);
+        throw new Error("Image could not be uploaded");
+      }
+      fileData = {
+        fileName: uploadedFile.Original_filename,
+        filePath: uploadedFile.secure_url,
+        fileType: req.file.mimetype,
+        fileSize: fileSizeFormatter(req.file.size, 2),
+        publicId: uploadedFile.public_id,
+      };
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      { _id: productId },
+      {
+        name,
+        category,
+        quantity,
+        price,
+        description,
+        image: Object.keys(fileData).length === 0 ? product?.image : fileData,
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
+    if (Object.keys(fileData).length > 0 && product.image.publicId) {
+      await cloudinary.uploader.destroy(product.image.publicId);
+    }
+
+    res.status(201).json({ updatedProduct });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   createProduct,
   getProducts,
   getProduct,
   deleteProduct,
+  updateProduct,
 };
