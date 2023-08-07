@@ -1,27 +1,9 @@
 const multer = require("multer");
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads");
-  },
-  filename: function (req, file, cb) {
-    cb(
-      null,
-      new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname
-    );
-  },
-});
+const DatauriParser = require("datauri/parser");
 
-function fileFilter(req, file, cb) {
-  if (
-    file.mimetype === "image/png" ||
-    file.mimetype === "image/jpg" ||
-    file.mimetype === "image/jpeg"
-  )
-    cb(null, true);
-  cb(null, false);
-}
+const storage = multer.memoryStorage();
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({ storage });
 
 const fileSizeFormatter = (bytes, decimal) => {
   if (bytes === 0) {
@@ -35,4 +17,10 @@ const fileSizeFormatter = (bytes, decimal) => {
   );
 };
 
-module.exports = { upload, fileSizeFormatter };
+const bufferToDataURI = (buffer, mimetype) => {
+  const parser = new DatauriParser();
+  parser.format(mimetype, buffer);
+  return parser.content;
+};
+
+module.exports = { upload, fileSizeFormatter, bufferToDataURI };

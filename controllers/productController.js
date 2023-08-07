@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const Product = require("../models/productModel");
-const { fileSizeFormatter } = require("../utils/fileUpload");
+const { fileSizeFormatter, bufferToDataURI } = require("../utils/fileUpload");
 const cloudinary = require("cloudinary").v2;
 
 cloudinary.config({
@@ -21,7 +21,8 @@ const createProduct = async (req, res, next) => {
     if (req.file) {
       let uploadedFile;
       try {
-        uploadedFile = await cloudinary.uploader.upload(req.file.path, {
+        const fileString = bufferToDataURI(req.file.buffer, req.file.mimetype);
+        uploadedFile = await cloudinary.uploader.upload(fileString, {
           folder: "IMS",
           resource_type: "image",
         });
@@ -30,7 +31,7 @@ const createProduct = async (req, res, next) => {
         throw new Error("Image could not be uploaded");
       }
       fileData = {
-        fileName: uploadedFile.Original_filename,
+        fileName: req.file.originalname?.replace(/ /g, "-"),
         filePath: uploadedFile.secure_url,
         fileType: req.file.mimetype,
         fileSize: fileSizeFormatter(req.file.size, 2),
@@ -137,7 +138,8 @@ const updateProduct = async (req, res, next) => {
     if (req.file) {
       let uploadedFile;
       try {
-        uploadedFile = await cloudinary.uploader.upload(req.file.path, {
+        const fileString = bufferToDataURI(req.file.buffer, req.file.mimetype);
+        uploadedFile = await cloudinary.uploader.upload(fileString, {
           folder: "IMS",
           resource_type: "image",
         });
@@ -146,7 +148,7 @@ const updateProduct = async (req, res, next) => {
         throw new Error("Image could not be uploaded");
       }
       fileData = {
-        fileName: uploadedFile.Original_filename,
+        fileName: req.file.originalname?.replace(/ /g, "-"),
         filePath: uploadedFile.secure_url,
         fileType: req.file.mimetype,
         fileSize: fileSizeFormatter(req.file.size, 2),
