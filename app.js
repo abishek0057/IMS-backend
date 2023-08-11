@@ -26,7 +26,7 @@ app.use("/api/product", productRoute);
 app.use("/api/contact", contactRoute);
 
 app.get("/", (req, res) => {
-  res.send("yohohohoho");
+  res.send("Wellcome to Inventory Management System");
 });
 
 app.use(errorHandler);
