@@ -6,7 +6,10 @@ const dotenv = require("dotenv").config();
 const { errorHandler } = require("./middleware/errorMiddleware");
 const app = express();
 const PORT = process.env.PORT || 8888;
-const dbConString = process.env.DB_CONNECTION_STRING_FOR_DOCKER;
+const dbConString =
+  process.env.NODE_ENV === "docker"
+    ? process.env.DB_CONNECTION_STRING_FOR_DOCKER
+    : process.env.DB_CONNECTION_STRING;
 const cookieParser = require("cookie-parser");
 const path = require("path");
 
