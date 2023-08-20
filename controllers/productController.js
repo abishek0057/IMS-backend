@@ -34,7 +34,7 @@ const createProduct = async (req, res, next) => {
         fileName: req.file.originalname?.replace(/ /g, "-"),
         filePath: uploadedFile.secure_url,
         fileType: req.file.mimetype,
-        fileSize: fileSizeFormatter(req.file.size, 2),
+        fileSize: fileSizeFormatter(req.file.size),
         publicId: uploadedFile.public_id,
       };
     }
@@ -151,7 +151,7 @@ const updateProduct = async (req, res, next) => {
         fileName: req.file.originalname?.replace(/ /g, "-"),
         filePath: uploadedFile.secure_url,
         fileType: req.file.mimetype,
-        fileSize: fileSizeFormatter(req.file.size, 2),
+        fileSize: fileSizeFormatter(req.file.size),
         publicId: uploadedFile.public_id,
       };
     }
