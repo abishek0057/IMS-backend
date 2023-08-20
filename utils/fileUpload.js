@@ -5,15 +5,14 @@ const storage = multer.memoryStorage();
 
 const upload = multer({ storage });
 
-const fileSizeFormatter = (bytes, decimal) => {
+const fileSizeFormatter = (bytes) => {
   if (bytes === 0) {
     return "0 Bytes";
   }
-  const dm = decimal || 2;
   const sizes = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"];
-  const index = Math.floor(Math.log(bytes) / Math.log(1000));
+  const index = Math.trunc(Math.log(bytes) / Math.log(1024));
   return (
-    parseFloat((bytes / Math.pow(1000, index)).toFixed(dm)) + " " + sizes[index]
+    parseFloat((bytes / Math.pow(1024, index)).toFixed(2)) + " " + sizes[index]
   );
 };
 
