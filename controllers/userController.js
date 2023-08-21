@@ -5,6 +5,8 @@ const { generateToken, verifyToken } = require("../utils/jwt");
 const { validatePassword } = require("../utils/password");
 const message = require("../utils/emailContent");
 const sendEmail = require("../utils/sendEmail");
+const { bufferToDataURI } = require("../utils/fileUpload");
+const cloudinary = require("cloudinary").v2;
 
 const registerUser = async (req, res, next) => {
   try {
@@ -117,11 +119,31 @@ const loginStatus = async (req, res) => {
 const updateUser = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
+    const imageLinkArr = user.photo.split("/");
+    let uploadedFile;
+    if (req.file) {
+      try {
+        await cloudinary.uploader.destroy(
+          `userImage/${imageLinkArr[imageLinkArr.length - 1].replace(
+            ".jpg",
+            ""
+          )}`
+        );
+        const fileString = bufferToDataURI(req.file.buffer, req.file.mimetype);
+        uploadedFile = await cloudinary.uploader.upload(fileString, {
+          folder: "userImage",
+          resource_type: "image",
+        });
+      } catch (err) {
+        res.status(500);
+        throw new Error("Image could not be uploaded");
+      }
+    }
     if (user) {
       user.name = req.body.name || user.name;
       user.phone = req.body.phone || user.phone;
       user.bio = req.body.bio || user.bio;
-      user.photo = req.body.photo || user.photo;
+      user.photo = uploadedFile.secure_url || user.photo;
 
       const updateduser = await user.save();
       res.status(200).json({ updateduser });
